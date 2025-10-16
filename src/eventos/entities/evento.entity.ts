@@ -1,5 +1,11 @@
 import { Usuario } from 'src/usuarios/entities/usuario.entity';
-import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity({
   name: 'eventos',
@@ -11,6 +17,7 @@ export class Evento {
   @Column({
     type: 'varchar',
     length: 30,
+    unique: true,
   })
   ev_nombre: string;
 
@@ -18,20 +25,22 @@ export class Evento {
     type: 'varchar',
     length: 100,
   })
-  ev_descripcion: string;
+  ev_description: string;
 
   @Column({
-    type: 'date',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
   })
   ev_fecha_creacion: Date;
 
   @Column({
-    type: 'date',
+    type: 'datetime',
   })
   ev_fecha_evento: Date;
 
   @Column({
-    type: 'date',
+    type: 'datetime',
+    default: () => "'1990-01-01 00:00:00'",
   })
   ev_fecha_modificacion: Date;
 
@@ -39,7 +48,7 @@ export class Evento {
     type: 'varchar',
     length: 70,
   })
-  ev_lugar: string;
+  ev_ubicacion: string;
 
   @Column({
     type: 'time',
@@ -49,7 +58,20 @@ export class Evento {
   @Column({
     type: 'time',
   })
-  ev_hora_final: string;
+  ev_hora_fin: string;
+
+  @Column({
+    type: 'varchar',
+    default: 'usuario_administrador',
+    length: 25,
+  })
+  ev_propietario: string;
+
+  @Column({
+    type: 'varchar',
+  })
+  ev_imagen_lugar: string;
+
 
   @ManyToMany(() => Usuario, (usuario) => usuario.us_eventos)
   @JoinTable({

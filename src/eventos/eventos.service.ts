@@ -1,11 +1,58 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateEventoDto } from './dto/create-evento.dto';
 import { UpdateEventoDto } from './dto/update-evento.dto';
+import { Repository } from 'typeorm';
+import { Evento } from './entities/evento.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Usuario } from 'src/usuarios/entities/usuario.entity';
 
 @Injectable()
 export class EventosService {
-  create(createEventoDto: CreateEventoDto) {
-    return 'This action adds a new evento';
+  private readonly logger = new Logger('EventosService');
+
+  constructor(
+    @InjectRepository(Evento)
+    private readonly _eventosRepository: Repository<Evento>,
+
+    @InjectRepository(Usuario)
+    private readonly _usuariosRepository: Repository<Usuario>,
+  ) {}
+
+  async create(createEventoDto: CreateEventoDto) {
+    try {
+      const evento: Evento = this._eventosRepository.create(createEventoDto);
+
+      await this._eventosRepository.save(evento);
+
+      return evento;
+    } catch (error) {
+      this.handleExceptions(error);
+    }
+  }
+
+  async agregarParticipante(evento_id: string, usuario_id: string) {
+    const evento: Evento = await this._eventosRepository.findOne({
+      where: { ev_id: evento_id },
+    });
+
+    if (!evento) throw new NotFoundException('Evento no encontrado');
+
+    const usuario: Usuario = await this._usuariosRepository.findOneBy({
+      us_id: usuario_id,
+    });
+
+    if (!usuario) throw new NotFoundException('Usuario no encontrado');
+
+    if (evento.ev_usuarios.some((u) => u.us_id === usuario.us_id))
+      return { message: 'El usuario ya participa en este evento' };
+
+    return { message: `Usuario agregado a ${evento.ev_nombre}` };
   }
 
   findAll() {
@@ -22,5 +69,12 @@ export class EventosService {
 
   remove(id: number) {
     return `This action removes a #${id} evento`;
+  }
+
+  private handleExceptions(error: any) {
+    if (error.code === 'ER_DUP_ENTRY')
+      throw new BadRequestException(error.sqlMessage);
+    this.logger.error(error);
+    throw new InternalServerErrorException('Unexpected error');
   }
 }

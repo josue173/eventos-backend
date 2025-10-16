@@ -39,11 +39,6 @@ export class Usuario {
   })
   us_correo: string;
 
-  @Column({
-    type: 'simple-array',
-  })
-  us_tipo: string[];
-
   @ManyToMany(() => Evento, (evento) => evento.ev_usuarios)
   // @JoinTable({ name: 'us_eventos' })
   us_eventos: Evento[];

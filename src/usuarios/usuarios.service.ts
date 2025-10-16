@@ -1,26 +1,68 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
-import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { Usuario } from './entities/usuario.entity';
 
 @Injectable()
 export class UsuariosService {
-  create(createUsuarioDto: CreateUsuarioDto) {
-    return 'This action adds a new usuario';
+  constructor(
+    @InjectRepository(Usuario)
+    private readonly usuarioRepository: Repository<Usuario>,
+  ) {}
+
+  async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
+    // Verificar si ya existe un usuario con el mismo correo o nombre de usuario
+    const usuario_existente = await this.usuarioRepository.findOne({
+      where: [
+        { us_correo: createUsuarioDto.us_correo },
+        { us_usuario: createUsuarioDto.us_usuario },
+      ],
+    });
+
+    if (usuario_existente) {
+      if (usuario_existente.us_correo === createUsuarioDto.us_correo) {
+        throw new ConflictException(
+          'Ya existe un usuario con este correo electrónico',
+        );
+      }
+      if (usuario_existente.us_usuario === createUsuarioDto.us_usuario) {
+        throw new ConflictException(
+          'Ya existe un usuario con este nombre de usuario',
+        );
+      }
+    }
+
+    const usuario = this.usuarioRepository.create(createUsuarioDto);
+    return await this.usuarioRepository.save(usuario);
   }
 
-  findAll() {
-    return `This action returns all usuarios`;
-  }
+  // async findAll(): Promise<Usuario[]> {
+  //   return await this.usuarioRepository.find();
+  // }
 
-  findOne(id: number) {
-    return `This action returns a #${id} usuario`;
-  }
+  // async findOne(id: string): Promise<Usuario> {
+  //   const usuario = await this.usuarioRepository.findOne({
+  //     where: { us_id: id },
+  //   });
+  //   if (!usuario) {
+  //     throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+  //   }
+  //   return usuario;
+  // }
 
-  update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
-    return `This action updates a #${id} usuario`;
-  }
+  // async update(
+  //   id: string,
+  //   updateUsuarioDto: UpdateUsuarioDto,
+  // ): Promise<Usuario> {
+  //   await this.usuarioRepository.update(id, updateUsuarioDto);
+  //   return await this.findOne(id);
+  // }
 
-  remove(id: number) {
-    return `This action removes a #${id} usuario`;
-  }
+  // async remove(id: string): Promise<void> {
+  //   await this.usuarioRepository.delete(id);
+  // }
 }
