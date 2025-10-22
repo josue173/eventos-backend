@@ -76,7 +76,7 @@ export class EventosService {
       usuario.us_correo,
       usuario.us_nombre,
       evento.ev_nombre,
-      evento.ev_fecha,
+      evento.ev_fecha_evento.toISOString(),
       evento.ev_ubicacion,
     );
 
@@ -108,7 +108,7 @@ export class EventosService {
         usuario.us_correo,
         usuario.us_nombre,
         evento.ev_nombre,
-        evento.ev_fecha,
+        evento.ev_fecha_evento.toISOString(),
         evento.ev_ubicacion,
       );
 

@@ -39,6 +39,12 @@ export class Usuario {
   })
   us_correo: string;
 
+  @Column({
+    type: 'varchar',
+    length: 255,
+  })
+  us_password: string;
+
   @ManyToMany(() => Evento, (evento) => evento.ev_usuarios)
   // @JoinTable({ name: 'us_eventos' })
   us_eventos: Evento[];

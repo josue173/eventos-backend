@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { LoginDto } from './dto/login.dto';
 import { Usuario } from './entities/usuario.entity';
 
 @Controller('usuarios')
@@ -12,6 +13,12 @@ export class UsuariosController {
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
     return await this.usuariosService.create(createUsuarioDto);
+  }
+
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() loginDto: LoginDto): Promise<{ usuario: Usuario; message: string }> {
+    return await this.usuariosService.login(loginDto);
   }
 
   @Get()
