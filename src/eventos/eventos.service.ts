@@ -11,6 +11,7 @@ import { Repository } from 'typeorm';
 import { Evento } from './entities/evento.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Usuario } from 'src/usuarios/entities/usuario.entity';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class EventosService {
@@ -22,6 +23,8 @@ export class EventosService {
 
     @InjectRepository(Usuario)
     private readonly _usuariosRepository: Repository<Usuario>,
+
+    private readonly emailService: EmailService,
   ) {}
 
   async create(createEventoDto: CreateEventoDto) {
@@ -53,6 +56,73 @@ export class EventosService {
       return { message: 'El usuario ya participa en este evento' };
 
     return { message: `Usuario agregado a ${evento.ev_nombre}` };
+  }
+
+  async confirmarParticipacion(evento_id: string, usuario_id: string) {
+    const evento: Evento = await this._eventosRepository.findOne({
+      where: { ev_id: evento_id },
+    });
+
+    if (!evento) throw new NotFoundException('Evento no encontrado');
+
+    const usuario: Usuario = await this._usuariosRepository.findOneBy({
+      us_id: usuario_id,
+    });
+
+    if (!usuario) throw new NotFoundException('Usuario no encontrado');
+
+    // Enviar email de confirmación
+    const emailEnviado = await this.emailService.enviarConfirmacionEvento(
+      usuario.us_correo,
+      usuario.us_nombre,
+      evento.ev_nombre,
+      evento.ev_fecha,
+      evento.ev_ubicacion,
+    );
+
+    if (emailEnviado) {
+      return {
+        message: 'Confirmación enviada exitosamente',
+        emailEnviado: true,
+      };
+    } else {
+      throw new InternalServerErrorException('Error al enviar la confirmación por email');
+    }
+  }
+
+  async enviarRecordatorioEvento(evento_id: string) {
+    const evento: Evento = await this._eventosRepository.findOne({
+      where: { ev_id: evento_id },
+    });
+
+    if (!evento) throw new NotFoundException('Evento no encontrado');
+
+    if (!evento.ev_usuarios || evento.ev_usuarios.length === 0) {
+      return { message: 'No hay participantes registrados para este evento' };
+    }
+
+    const resultados = [];
+    
+    for (const usuario of evento.ev_usuarios) {
+      const emailEnviado = await this.emailService.enviarRecordatorioEvento(
+        usuario.us_correo,
+        usuario.us_nombre,
+        evento.ev_nombre,
+        evento.ev_fecha,
+        evento.ev_ubicacion,
+      );
+
+      resultados.push({
+        usuario: usuario.us_nombre,
+        email: usuario.us_correo,
+        emailEnviado,
+      });
+    }
+
+    return {
+      message: 'Recordatorios enviados',
+      resultados,
+    };
   }
 
   findAll() {

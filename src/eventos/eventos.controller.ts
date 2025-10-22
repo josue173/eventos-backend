@@ -31,4 +31,17 @@ export class EventosController {
   remove(@Param('id') id: string) {
     return this.eventosService.remove(+id);
   }
+
+  @Post(':eventoId/participantes/:usuarioId/confirmar')
+  async confirmarParticipacion(
+    @Param('eventoId') eventoId: string,
+    @Param('usuarioId') usuarioId: string,
+  ) {
+    return this.eventosService.confirmarParticipacion(eventoId, usuarioId);
+  }
+
+  @Post(':eventoId/recordatorio')
+  async enviarRecordatorio(@Param('eventoId') eventoId: string) {
+    return this.eventosService.enviarRecordatorioEvento(eventoId);
+  }
 }
