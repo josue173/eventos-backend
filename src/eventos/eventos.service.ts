@@ -125,20 +125,108 @@ export class EventosService {
     };
   }
 
-  findAll() {
-    return `This action returns all eventos`;
+  async findAll() {
+    try {
+      const eventos = await this._eventosRepository.find({
+        relations: ['ev_usuarios'],
+        order: {
+          ev_fecha_evento: 'ASC',
+        },
+      });
+
+      return eventos;
+    } catch (error) {
+      this.handleExceptions(error);
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} evento`;
+  async findOne(id: string) {
+    try {
+      const evento = await this._eventosRepository.findOne({
+        where: { ev_id: id },
+        relations: ['ev_usuarios'],
+      });
+
+      if (!evento) {
+        throw new NotFoundException(`Evento con ID ${id} no encontrado`);
+      }
+
+      return evento;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      this.handleExceptions(error);
+    }
   }
 
-  update(id: number, updateEventoDto: UpdateEventoDto) {
-    return `This action updates a #${id} evento`;
+  async update(id: string, updateEventoDto: UpdateEventoDto) {
+    try {
+      const evento = await this._eventosRepository.findOne({
+        where: { ev_id: id },
+      });
+
+      if (!evento) {
+        throw new NotFoundException(`Evento con ID ${id} no encontrado`);
+      }
+
+      // Actualizar la fecha de modificación
+      const eventoActualizado = {
+        ...updateEventoDto,
+        ev_fecha_modificacion: new Date(),
+      };
+
+      await this._eventosRepository.update(id, eventoActualizado);
+
+      // Retornar el evento actualizado
+      const eventoActualizadoCompleto = await this._eventosRepository.findOne({
+        where: { ev_id: id },
+        relations: ['ev_usuarios'],
+      });
+
+      return eventoActualizadoCompleto;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      this.handleExceptions(error);
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} evento`;
+  async remove(id: string) {
+    try {
+      const evento = await this._eventosRepository.findOne({
+        where: { ev_id: id },
+        relations: ['ev_usuarios'],
+      });
+
+      if (!evento) {
+        throw new NotFoundException(`Evento con ID ${id} no encontrado`);
+      }
+
+      // Verificar si el evento tiene participantes
+      if (evento.ev_usuarios && evento.ev_usuarios.length > 0) {
+        throw new BadRequestException(
+          `No se puede eliminar el evento "${evento.ev_nombre}" porque tiene ${evento.ev_usuarios.length} participantes registrados. Primero elimina a los participantes.`,
+        );
+      }
+
+      await this._eventosRepository.remove(evento);
+
+      return {
+        message: `Evento "${evento.ev_nombre}" eliminado exitosamente`,
+        eventoEliminado: {
+          id: evento.ev_id,
+          nombre: evento.ev_nombre,
+          fechaEliminacion: new Date(),
+        },
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      this.handleExceptions(error);
+    }
   }
 
   private handleExceptions(error: any) {

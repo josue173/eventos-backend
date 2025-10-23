@@ -180,11 +180,32 @@ export class EmailService {
 
   async verificarConexion(): Promise<boolean> {
     try {
+      // Verificar que las variables de entorno estén configuradas
+      const emailHost = this.configService.get<string>('EMAIL_HOST');
+      const emailPort = this.configService.get<number>('EMAIL_PORT');
+      const emailUser = this.configService.get<string>('EMAIL_USER');
+      const emailPass = this.configService.get<string>('EMAIL_PASS');
+
+      if (!emailHost || !emailPort || !emailUser || !emailPass) {
+        this.logger.error('Variables de entorno de email no configuradas correctamente');
+        this.logger.error(`EMAIL_HOST: ${emailHost ? '✓' : '✗'}`);
+        this.logger.error(`EMAIL_PORT: ${emailPort ? '✓' : '✗'}`);
+        this.logger.error(`EMAIL_USER: ${emailUser ? '✓' : '✗'}`);
+        this.logger.error(`EMAIL_PASS: ${emailPass ? '✓' : '✗'}`);
+        return false;
+      }
+
+      // Verificar la conexión con el servidor
       await this.transporter.verify();
       this.logger.log('Conexión con el servidor de email verificada correctamente');
       return true;
     } catch (error) {
       this.logger.error('Error al verificar la conexión con el servidor de email:', error);
+      this.logger.error('Detalles del error:', {
+        code: error.code,
+        command: error.command,
+        response: error.response,
+      });
       return false;
     }
   }

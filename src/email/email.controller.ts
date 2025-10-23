@@ -12,7 +12,8 @@ export class EmailController {
       conexionExitosa,
       message: conexionExitosa 
         ? 'Conexión con el servidor de email verificada correctamente' 
-        : 'Error al conectar con el servidor de email',
+        : 'Error al conectar con el servidor de email. Revisa la configuración en el archivo .env y los logs del servidor.',
+      timestamp: new Date().toISOString(),
     };
   }
 }
