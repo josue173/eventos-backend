@@ -9,12 +9,12 @@ import {
 
 export class CreateEventoDto {
   @IsString()
-  @MinLength(10)
+  @MinLength(5)
   @MaxLength(30)
   public ev_nombre: string;
 
   @IsString()
-  @MinLength(15)
+  @MinLength(5)
   @MaxLength(100)
   public ev_description: string;
 
@@ -40,4 +40,8 @@ export class CreateEventoDto {
 
   @IsString()
   public ev_imagen_lugar: string;
+
+  @IsString()
+  @MaxLength(25)
+  public ev_propietario: string;
 }
